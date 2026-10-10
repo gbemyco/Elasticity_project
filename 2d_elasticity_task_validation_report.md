@@ -1,65 +1,82 @@
-# Template comparison and revised-task verification
+# Revised elasticity task: tolerance and content repairs
 
-11 October 2026. This is author verification, not a new platform Oracle result.
+The latest supplied platform screenshot reports environment, Oracle and no-op
+passes. Its remaining reference-check failure is N3.tolerance_noise: a relative
+1e-12 perturbation of Step 4 outputs fails test 19. The supplied content check
+also reports seven blocking findings and three advisories. This revision
+addresses those findings; the execution evidence below is local author
+verification, not a new platform approval.
 
-The newly supplied template has 22 graded cases. Its reference, independent
-solution and each per-step reference pass these cases locally. Both complete
-implementations also pass when exposed through call-only proxies. The user
-reports that this template previously passed the platform reference check.
+The output perturbation was reproduced in both implementations. The almost-soft
+normal mode in zero-based Step 4 case 18 magnifies binary rounding of a rescaled
+reported stiffness, changing the recomputed Poisson ratio beyond the old fixed
+budget. The repair propagates an explicitly stated coefficient-reporting
+precision through positive-matrix compliance bounds. It preserves strict Born
+classification and the canonical tie rule. Cases 15 and 18 also find continuous
+extrema independently and compare angles and values against separate budgets.
+A permitted angle error is no longer converted into an unintended modulus error.
 
-The template uses the accepted `tasks/2d_elasticity` folder, four consecutive
-`sub_steps`, declared relative paths, NumPy-only scientific imports, matching
-reference/scaffold signatures and standalone numbered test cases. It calls
-public functions normally and never requires their internal Python globals.
-Those conventions are retained in the revised submission.
+| Reported finding | Repair and coverage |
+|---|---|
+| Nonfinite-input policy unclear in all four steps | Each visible step prompt explicitly names NaN, positive/negative infinity, relevant arguments and ValueError, and explains missing/diverged data or undefined loading directions. Existing rejection tests remain. |
+| Binary floating-point spacing in Step 2 unspecified | Its visible prompt defines np.finfo(float).eps and the 64-eps endpoint allowance as a dimensionless design-roundoff convention. It is not a physical input or a stability cutoff. |
+| Complex strains missing from Step 2 tests | New case 24 passes otherwise identifiable real data with a genuinely complex strain entry and requires ValueError. |
+| Unstable branch lacks complex-angle coverage | New Step 4 case 19 supplies an unstable material and complex angles, requiring ValueError. |
+| Exact fitted isotropic convention untested | New Step 4 case 20 reaches exactly isotropic fitted coefficients in the reference and explicitly checks both canonical angles against zero. Normal public calls are used. Other admissible fitted tensors are checked independently at their own fit, so exact fitting symmetry is not imposed on alternatives. |
+| Step 1 coefficient-magnitude calibration untested | New case 21 uses a 10000 N/m coefficient and independent stress and harmonic-work targets. |
+| Step 1 soft-normal calibration endpoint untested | New case 22 accepts the actual binary coefficient determinant ratio immediately above 1e-8 and checks zero normal-load relaxation. Its ratio is independently checked in extended precision. |
+| Approximate Step 1 energies can corrupt Step 2's design | The reference now derives the raw quadratic design algebraically. Its numerical fit no longer depends on a tolerance-limited energy helper. The independent implementation already constructs local constitutive-matrix contractions and solves by QR. Dependencies now match actual calls. |
 
-The previous expanded submission's confirmed Oracle failure was caused by
-four Step 4 cases reading `__globals__`. Oracle's callable proxy does not expose
-that attribute. The correction rewrote those cases as normal calls using real
-energy datasets and scientific expectations at the returned fit. The template
-comparison confirms that this correction follows its public-interface pattern.
+All case numbers above are zero-based. The platform's test 19 is case 18.
+There are still four evaluated functions, five packaged scientific mutants,
+24 submission files, and the original tasks/2d_elasticity identity. Five new
+cases bring the total to 95: 23,25,16,21 per step and ten whole-task cases.
+Accepted top-level and per-step YAML field names and source paths are retained.
+The source.md supplied by the user remains an exact byte prefix; the previously
+inspected-paper attribution is retained unchanged. Scientific execution uses
+NumPy only and is offline.
 
-| Item | Supplied template | Revised submission |
-|---|---:|---:|
-| Evaluated steps | 4 | 4 |
-| Packaged scientific mutants | 5 | 5 |
-| Submission files | 24 | 24 |
-| Total graded cases | 22 | 90 |
-| Direct reference cases passed | 22 | 90 |
-| Independent-solution cases passed | 22 | 90 |
-| Call-only reference cases passed | 22 | 90 |
-| Call-only independent cases passed | 22 | 90 |
+Only the reference fitting implementation changes. The relaxation, directional
+mechanics and integrated reference functions are unchanged. The independent
+solution is unchanged. Per-step and complete reference definitions agree.
+The missing-conversion and whole-task shear mutants are updated to retain their
+original scientific errors with the algebraic design.
 
-Top-level and per-step YAML field-name sets are identical. Submission relative
-paths match except for the named Step 4 scientific mutant: the revised task
-uses `step_4_sampled_extrema.py`, declared consistently in its YAML, to detect
-loss of continuous global extrema. All declared paths exist.
+Executed checks:
 
-The 24-file submission consists of README.md and the task folder. Author-only
-runners and reports are kept outside the upload ZIP. The scientific task files
-are byte-identical to the previously corrected version: this comparison does
-not revert the new relaxation calculation or weaken its tests.
+- Both complete implementations: 95/95 each.
+- Both implementations through call-only evaluator proxies: 95/95 each.
+- Isolated per-step references: 23/23,25/25,16/16,21/21.
+- All five packaged scientific mutants are rejected by their relevant suites.
+- None and zero controls are rejected on all 95 cases.
+- Final-output verification: 30 expected-pass perturbation modes per
+  implementation, 872/872 evaluations each. These include uniform relative
+  +/-1e-12 perturbations, independent result-field perturbations and permitted
+  extremum-angle errors.
+- Admissible intermediate coefficient and response error probes: 1334/1334
+  evaluations per implementation; independent Step 1 error probes: 276/276.
+- Eleven focused incorrect-physics/validation controls are rejected, including
+  strict conditioning below 1000, zero shear/determinant acceptance, positive
+  determinant cutoffs, wrong tie selection, coefficient clipping, discarded
+  complex inputs and an incorrect exact-isotropic direction.
+- Core and final-output checks pass in three clean processes with thread/hash
+  configurations (1,0), (1,271), (2,913).
+- Eighty deterministic material/design pairs pass independent mechanical and
+  inference comparisons. Maximum SVD/QR stiffness difference is
+  2.1600499167107046e-12 N/m.
 
-The revised task retains mixed prescribed/free elastic relaxation, continuous
-global extrema, exact conditioning-endpoint coverage, strict returned-fit Born
-classification, near-degenerate response checks, anisotropic endpoint ties,
-propagated numerical error budgets, and the inspected-paper/source attribution.
-The template's short energy transcription and sampled-only extrema are not
-reintroduced. Its reference pass demonstrates self-consistency of its tested
-cases, rather than comprehensive scientific quality.
+An additional diagnostic deliberately changes coefficient entries independently
+at an exactly zero stability boundary while keeping the original Boolean. That
+can change the strict physical phase and is not an expected-pass control. It is
+kept distinct from the benign uniform output-nudge control that the platform
+requires. No stability tolerance is introduced to make inconsistent phases pass.
 
-Revised per-step case counts are 21,24,16,19; whole-task cases are 10. Both
-implementations, their call-only proxy interfaces and all per-step references
-pass. Five scientific mutants and both all-function no-op controls are rejected.
-The six focused conditioning, stability and tie-error controls remain rejected.
-Earlier author verification also passed admissible-error perturbations, three
-clean thread/hash runs, 80 deterministic material/design pairs and 2,268
-high-precision directional comparisons. No scientific implementation changed
-in this packaging revision, so those execution records remain applicable.
+The final ZIP is unpacked into a new directory and its references, proxies,
+per-step references, declared paths, case counts, mutants, no-op controls and
+final-output perturbations are checked again. Author runners and execution
+records are kept outside the submission ZIP. A fresh upload must run the
+platform's reference and content checks; their result is not asserted here.
 
-A fresh unpack of the final upload archive is checked again for signatures,
-paths, case counts, correct implementations, proxies, mutants and no-op controls.
-The new ZIP has not been executed in the platform's Oracle container. A new
-Oracle run and the subsequent quality checks remain necessary. No identity
-mapping schema was supplied, so the original folder identity is retained
-without a guessed `_id_mapping.json` or placeholder identity.
+Final archive: 24 files, 53826 bytes.
+
+SHA256: `7cd9bda1aebdbed86c785bcc60c52b9e3c92f7a26272f951a102d3490142a0ac`.
