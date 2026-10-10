@@ -1,82 +1,78 @@
-# Revised elasticity task: tolerance and content repairs
+# Content-only revision with reference implementations preserved
 
-The latest supplied platform screenshot reports environment, Oracle and no-op
-passes. Its remaining reference-check failure is N3.tolerance_noise: a relative
-1e-12 perturbation of Step 4 outputs fails test 19. The supplied content check
-also reports seven blocking findings and three advisories. This revision
-addresses those findings; the execution evidence below is local author
-verification, not a new platform approval.
+11 October 2026. The user reports that the preceding archive passes the platform
+reference check. This revision is limited to the latest content feedback.
+No reference implementation, independent implementation, scaffold, mutant,
+function signature, dependency declaration or numerical tolerance changes.
+All six reference/independent implementation files are byte-identical to the
+previous archive. The source and scientific background also remain unchanged.
 
-The output perturbation was reproduced in both implementations. The almost-soft
-normal mode in zero-based Step 4 case 18 magnifies binary rounding of a rescaled
-reported stiffness, changing the recomputed Poisson ratio beyond the old fixed
-budget. The repair propagates an explicitly stated coefficient-reporting
-precision through positive-matrix compliance bounds. It preserves strict Born
-classification and the canonical tie rule. Cases 15 and 18 also find continuous
-extrema independently and compare angles and values against separate budgets.
-A permitted angle error is no longer converted into an unintended modulus error.
+The latest content report lists four input-policy findings, two missing complex
+input cases and a conditional isotropy assertion. The input-policy statements
+already existed in the previous parsed YAML, but the report described them as
+absent. This revision puts them beside the input definitions, repeats their
+scientific rationale in the main prompt, and emits agent-visible prose as literal
+YAML blocks. NaN and infinities are failed-computation markers that must raise
+ValueError; machine epsilon is explicitly an internal precision constant rather
+than a physical input. Existing rejection tests and numeric limits are retained.
 
-| Reported finding | Repair and coverage |
+| Latest finding | Content repair |
 |---|---|
-| Nonfinite-input policy unclear in all four steps | Each visible step prompt explicitly names NaN, positive/negative infinity, relevant arguments and ValueError, and explains missing/diverged data or undefined loading directions. Existing rejection tests remain. |
-| Binary floating-point spacing in Step 2 unspecified | Its visible prompt defines np.finfo(float).eps and the 64-eps endpoint allowance as a dimensionless design-roundoff convention. It is not a physical input or a stability cutoff. |
-| Complex strains missing from Step 2 tests | New case 24 passes otherwise identifiable real data with a genuinely complex strain entry and requires ValueError. |
-| Unstable branch lacks complex-angle coverage | New Step 4 case 19 supplies an unstable material and complex angles, requiring ValueError. |
-| Exact fitted isotropic convention untested | New Step 4 case 20 reaches exactly isotropic fitted coefficients in the reference and explicitly checks both canonical angles against zero. Normal public calls are used. Other admissible fitted tensors are checked independently at their own fit, so exact fitting symmetry is not imposed on alternatives. |
-| Step 1 coefficient-magnitude calibration untested | New case 21 uses a 10000 N/m coefficient and independent stress and harmonic-work targets. |
-| Step 1 soft-normal calibration endpoint untested | New case 22 accepts the actual binary coefficient determinant ratio immediately above 1e-8 and checks zero normal-load relaxation. Its ratio is independently checked in extended precision. |
-| Approximate Step 1 energies can corrupt Step 2's design | The reference now derives the raw quadratic design algebraically. Its numerical fit no longer depends on a tolerance-limited energy helper. The independent implementation already constructs local constitutive-matrix contractions and solves by QR. Dependencies now match actual calls. |
+| Step 1 nonfinite input policy not recognized | Main and Step 1 input paragraphs name np.nan, np.inf, -np.inf and ValueError, including ignored free guesses and invalid component labels. |
+| Step 2 nonfinite inputs and machine epsilon | Its input paragraph names failed DFT-data markers and their rejection. Its precision paragraph defines binary64 epsilon and its existing endpoint role. The test comment distinguishes an internal comparison constant from supplied data. |
+| Step 3 nonfinite input policy not recognized | Its input paragraph explicitly rejects missing/diverged stiffness data and undefined nonfinite loading directions. |
+| Step 4 nonfinite inputs and machine epsilon | Its input paragraph requires rejection before either stability branch. The precision statement and comparison comments identify epsilon as internal arithmetic data. Valid unstable-output NaNs remain a defined result. |
+| No complex strain in a free input column | New Step 1 case 23 supplies .02+1j in free column 1 and requires ValueError. |
+| No empty complex-typed strain batch | New Step 1 case 24 supplies np.empty((0,3),dtype=complex) and requires ValueError. |
+| Exact-isotropy assertions can be skipped by an asymmetric fit | Step 4 case 20 now computes independent critical-direction work and canonical tie targets unconditionally. All directions and extrema are checked on every run. The same general canonical rule applies to the isotropic limit; no separate bitwise-fit acceptance branch remains. |
 
-All case numbers above are zero-based. The platform's test 19 is case 18.
-There are still four evaluated functions, five packaged scientific mutants,
-24 submission files, and the original tasks/2d_elasticity identity. Five new
-cases bring the total to 95: 23,25,16,21 per step and ten whole-task cases.
-Accepted top-level and per-step YAML field names and source paths are retained.
-The source.md supplied by the user remains an exact byte prefix; the previously
-inspected-paper attribution is retained unchanged. Scientific execution uses
-NumPy only and is offline.
+Case numbers are zero-based. There are 97 cases: 25,25,16,21 in the four steps,
+plus ten whole-task cases. The package still contains four evaluated functions,
+five scientific mutants and 24 files under the original task identity.
 
-Only the reference fitting implementation changes. The relaxation, directional
-mechanics and integrated reference functions are unchanged. The independent
-solution is unchanged. Per-step and complete reference definitions agree.
-The missing-conversion and whole-task shear mutants are updated to retain their
-original scientific errors with the algebraic design.
+For the isotropic dataset, the SVD reference reaches an exactly isotropic returned
+fit; both implementations give canonical directions (0,0). An incorrect-physics
+control changing only exactly isotropic directions to pi/4 is rejected by case 20.
+Correct asymmetric fits within the published fitting error budget are also
+checked unconditionally against their own independently computed directions.
+This preserves the scientific contract rather than demanding that every valid
+least-squares implementation reproduce bitwise fitting symmetry.
 
-Executed checks:
+The screenshot recommends temporarily substituting the public fitting dependency.
+No supported override mechanism is supplied for the platform's call-only
+interface. The prior attempt to inspect function globals failed Oracle. This
+revision therefore uses the unconditional public-result oracle and the general
+tie definition; it does not claim a forced dependency-injection test. The general
+rule entails zero canonical directions for isotropic work without requiring a
+particular implementation branch.
 
-- Both complete implementations: 95/95 each.
-- Both implementations through call-only evaluator proxies: 95/95 each.
-- Isolated per-step references: 23/23,25/25,16/16,21/21.
+Executed author checks:
+
+- Both complete implementations and both call-only proxy interfaces: 97/97 each.
+- Isolated per-step references: 25/25,25/25,16/16,21/21.
 - All five packaged scientific mutants are rejected by their relevant suites.
-- None and zero controls are rejected on all 95 cases.
-- Final-output verification: 30 expected-pass perturbation modes per
-  implementation, 872/872 evaluations each. These include uniform relative
-  +/-1e-12 perturbations, independent result-field perturbations and permitted
+- None and zero controls are rejected on every case.
+- Thirty expected-pass final-output perturbation modes per implementation:
+  876/876 evaluations each, including relative +/-1e-12 nudges and allowed
   extremum-angle errors.
-- Admissible intermediate coefficient and response error probes: 1334/1334
-  evaluations per implementation; independent Step 1 error probes: 276/276.
-- Eleven focused incorrect-physics/validation controls are rejected, including
-  strict conditioning below 1000, zero shear/determinant acceptance, positive
-  determinant cutoffs, wrong tie selection, coefficient clipping, discarded
-  complex inputs and an incorrect exact-isotropic direction.
-- Core and final-output checks pass in three clean processes with thread/hash
+- Existing admissible intermediate-error checks: 1334/1334 per implementation.
+- Admissible Step 1 output-error checks: 300/300.
+- Existing conditioning, stability, tie, clipping, complex-input and isotropic
+  direction controls remain rejected. Two additional author controls that
+  discard only complex free guesses or accept only empty complex batches are
+  rejected specifically by the new cases in both implementations.
+- Core and output-noise checks pass in three clean processes with thread/hash
   configurations (1,0), (1,271), (2,913).
-- Eighty deterministic material/design pairs pass independent mechanical and
-  inference comparisons. Maximum SVD/QR stiffness difference is
-  2.1600499167107046e-12 N/m.
+- Direct file comparison verifies reference-code preservation, unchanged
+  metadata field sets, signatures, dependencies and numerical criteria.
 
-An additional diagnostic deliberately changes coefficient entries independently
-at an exactly zero stability boundary while keeping the original Boolean. That
-can change the strict physical phase and is not an expected-pass control. It is
-kept distinct from the benign uniform output-nudge control that the platform
-requires. No stability tolerance is introduced to make inconsistent phases pass.
+Changed submission files are README.md, problem.yaml, Step 1 test coverage,
+Step 4's unconditional canonical oracle, and comments in Step 2 tests. The
+computational Step 2 tests, Step 3 tests and general tests are unchanged.
+Author runners and detailed execution records stay outside the submission ZIP.
+The final archive is unpacked separately and checked again. These are local
+verification results; a new platform content-check result is not asserted.
 
-The final ZIP is unpacked into a new directory and its references, proxies,
-per-step references, declared paths, case counts, mutants, no-op controls and
-final-output perturbations are checked again. Author runners and execution
-records are kept outside the submission ZIP. A fresh upload must run the
-platform's reference and content checks; their result is not asserted here.
+Archive: 24 files, 54734 bytes.
 
-Final archive: 24 files, 53826 bytes.
-
-SHA256: `7cd9bda1aebdbed86c785bcc60c52b9e3c92f7a26272f951a102d3490142a0ac`.
+SHA256: `0382205b2ce4d908ec8e77853937d2523e3d62c87226d42c4cc8b217d57f8aec`.
